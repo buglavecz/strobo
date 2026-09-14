@@ -145,7 +145,7 @@ body {
   margin-top: 0;
 }
 
-.settings .radio-row span:first-child {
+.settings .row span:first-child {
   display: flex;
   flex-direction: column;
   gap: 2px;

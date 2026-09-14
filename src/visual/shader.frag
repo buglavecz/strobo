@@ -8,11 +8,50 @@ uniform float uMids;
 uniform float uHighs;
 uniform float uBeat;
 uniform float uFlash;
+uniform float uKitt;
 
 varying vec2 vUv;
 
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453123);
+}
+
+// Knight Rider "KITT" voice display: a row of vertical red bars, symmetric
+// about the centerline, driven by the same safety-limited audio signals as
+// the rest of the shader (uFlash is already rate/brightness limited by
+// StrobeController, so this mode never introduces its own flicker source —
+// only a slow, smooth sine drift is added per bar for a bit of life).
+const float KITT_BARS = 15.0;
+const float KITT_GAP = 0.16;
+const float KITT_MAX_HALF = 0.17;
+
+vec3 kittColor(vec2 uv, float time, float volume, float bass, float flash) {
+  float col = floor(uv.x * KITT_BARS);
+  float cellX = fract(uv.x * KITT_BARS);
+  float barMask = step(KITT_GAP, cellX) * step(cellX, 1.0 - KITT_GAP);
+
+  float center = (KITT_BARS - 1.0) * 0.5;
+  float p = (col - center) / center;
+
+  float rnd = hash(vec2(col, 7.0));
+  float wave = 0.85 + 0.15 * sin(time * 2.2 + col * 1.7);
+  float envelope = volume * 0.75 + bass * 0.35;
+  // Beat impulses are intentionally left out here: uFlash is the only
+  // signal StrobeController rate-limits, so it's the sole source of sudden
+  // "kicks" in KITT mode too — this keeps the same max-flash-frequency
+  // guarantee that applies to the default visual.
+  float level = envelope * (0.6 + rnd * 0.4) * wave + flash * 0.6;
+  level *= mix(1.0, 0.55, abs(p));
+  level = clamp(level, 0.0, 1.0);
+
+  float halfHeight = level * KITT_MAX_HALF;
+  float distFromCenter = abs(uv.y - 0.5);
+
+  float lit = smoothstep(halfHeight + 0.01, halfHeight - 0.01, distFromCenter);
+  float glow = exp(-max(distFromCenter - halfHeight, 0.0) * 40.0) * 0.35;
+
+  float brightness = (lit + glow) * barMask;
+  return vec3(1.0, 0.05, 0.02) * brightness;
 }
 
 void main() {
@@ -46,6 +85,9 @@ void main() {
   grain *= 0.025 + uFlash * 0.05 + uBeat * 0.03;
 
   vec3 color = subtleColor + flashColor + vec3(grain);
+
+  vec3 kitt = kittColor(vUv, uTime, uVolume, uBass, uFlash);
+  color = mix(color, kitt, uKitt);
 
   float vignette = smoothstep(1.15, 0.15, dist);
   color *= vignette;

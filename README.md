@@ -71,6 +71,15 @@ npm run preview
   microphone source — reacting to a different sound source doesn't change
   the safety behavior.
 
+### KITT mode
+
+A "KITT mód" toggle in Settings (and the in-session overlay) swaps the
+default glow visual for a row of vertical red bars reminiscent of the
+Knight Rider KITT voice display, growing symmetrically from a centerline.
+It's driven by the same audio features and the same safety-limited
+`uFlash` signal as the default visual, so Safe Mode's flash-rate and
+brightness limits apply here too.
+
 ## Browser requirements
 
 Requires a browser with `getUserMedia`, `AudioContext`/`AnalyserNode`, WebGL,

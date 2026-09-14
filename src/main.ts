@@ -16,6 +16,7 @@ let visualizer: Visualizer | null = null;
 
 // Settings persist across start/stop cycles within a session.
 const strobe = new StrobeController();
+let kittModeEnabled = false;
 
 const ui = new UI(appRoot, {
   onStart: () => {
@@ -29,6 +30,10 @@ const ui = new UI(appRoot, {
   },
   onIntensityChange: (value) => {
     strobe.masterIntensity = value;
+  },
+  onKittModeChange: (enabled) => {
+    kittModeEnabled = enabled;
+    visualizer?.setKittMode(enabled);
   },
 });
 
@@ -104,6 +109,7 @@ async function handleStart(): Promise<void> {
   strobe.reset();
 
   visualizer = new Visualizer();
+  visualizer.setKittMode(kittModeEnabled);
   ui.attachCanvas(visualizer.canvas);
   visualizer.start(analyzer, strobe);
 

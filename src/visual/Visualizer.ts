@@ -28,6 +28,9 @@ export class Visualizer {
   /** Latest overall volume, exposed for the UI overlay. */
   lastVolume = 0;
 
+  private kittTarget = 0;
+  private kittAmount = 0;
+
   constructor() {
     this.canvas = document.createElement('canvas');
     this.canvas.className = 'strobe-canvas';
@@ -55,6 +58,7 @@ export class Visualizer {
         uHighs: { value: 0 },
         uBeat: { value: 0 },
         uFlash: { value: 0 },
+        uKitt: { value: 0 },
       },
     });
 
@@ -73,6 +77,11 @@ export class Visualizer {
     (this.material.uniforms.uResolution.value as THREE.Vector2).set(width, height);
   };
 
+  /** Smoothly crossfades into/out of the KITT voice-display look. */
+  setKittMode(enabled: boolean): void {
+    this.kittTarget = enabled ? 1 : 0;
+  }
+
   start(analyzer: AudioAnalyzer, strobe: StrobeController): void {
     this.analyzer = analyzer;
     this.strobe = strobe;
@@ -87,6 +96,9 @@ export class Visualizer {
 
     const dt = (now - this.lastFrameTime) / 1000;
     this.lastFrameTime = now;
+
+    this.kittAmount += (this.kittTarget - this.kittAmount) * Math.min(1, dt * 4);
+    this.material.uniforms.uKitt.value = this.kittAmount;
 
     if (this.analyzer && this.strobe) {
       const features = this.analyzer.update();

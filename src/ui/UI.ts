@@ -6,6 +6,7 @@ export interface UICallbacks {
   /** Called only after the user has confirmed disabling Safe Mode (or when re-enabling it, immediately). */
   onSafeModeChange: (enabled: boolean) => void;
   onIntensityChange: (value: number) => void;
+  onKittModeChange: (enabled: boolean) => void;
 }
 
 const OVERLAY_HIDE_DELAY_MS = 2500;
@@ -22,6 +23,7 @@ export class UI {
   private confirmEl!: HTMLElement;
   private safeModeToggle!: HTMLInputElement;
   private intensityInput!: HTMLInputElement;
+  private kittModeToggle!: HTMLInputElement;
   private levelBar!: HTMLElement;
   private canvasHost!: HTMLElement;
   private sourceRadios!: HTMLInputElement[];
@@ -100,6 +102,16 @@ export class UI {
             <span>Intenzitás</span>
             <input type="range" class="intensity-input" min="0" max="1" step="0.01" value="1" />
           </label>
+
+          <p class="group-label">Megjelenés</p>
+          <label class="row">
+            <span>
+              KITT mód
+              <span class="hint-inline">Knight Rider hangkijelző: függőleges piros csíkok</span>
+            </span>
+            <input type="checkbox" class="kitt-mode-toggle" />
+          </label>
+
           <p class="hint">A mikrofon-/fülhang-hozzáférést csak az Indítás gomb megnyomása után kéri be az app, és leállításkor vagy a teljes képernyő elhagyásakor felszabadítja.</p>
         </details>
       </div>
@@ -123,6 +135,10 @@ export class UI {
       <label class="row">
         <span>Intenzitás</span>
         <input type="range" class="overlay-intensity-input" min="0" max="1" step="0.01" value="1" />
+      </label>
+      <label class="row">
+        <span>KITT mód</span>
+        <input type="checkbox" class="overlay-kitt-mode-toggle" />
       </label>
       <div class="level-meter"><div class="level-bar"></div></div>
     `;
@@ -152,11 +168,13 @@ export class UI {
     this.errorEl = this.landingEl.querySelector('.error') as HTMLElement;
     this.safeModeToggle = this.landingEl.querySelector('.safe-mode-toggle') as HTMLInputElement;
     this.intensityInput = this.landingEl.querySelector('.intensity-input') as HTMLInputElement;
+    this.kittModeToggle = this.landingEl.querySelector('.kitt-mode-toggle') as HTMLInputElement;
     this.levelBar = this.overlayEl.querySelector('.level-bar') as HTMLElement;
     this.sourceRadios = Array.from(this.landingEl.querySelectorAll('.source-radio'));
 
     const overlaySafeModeToggle = this.overlayEl.querySelector('.overlay-safe-mode-toggle') as HTMLInputElement;
     const overlayIntensityInput = this.overlayEl.querySelector('.overlay-intensity-input') as HTMLInputElement;
+    const overlayKittModeToggle = this.overlayEl.querySelector('.overlay-kitt-mode-toggle') as HTMLInputElement;
 
     if (this.reducedMotion) {
       this.safeModeToggle.disabled = true;
@@ -201,6 +219,15 @@ export class UI {
     };
     wireIntensity(this.intensityInput, overlayIntensityInput);
     wireIntensity(overlayIntensityInput, this.intensityInput);
+
+    const wireKittMode = (input: HTMLInputElement, sync: HTMLInputElement) => {
+      input.addEventListener('change', () => {
+        sync.checked = input.checked;
+        this.callbacks.onKittModeChange(input.checked);
+      });
+    };
+    wireKittMode(this.kittModeToggle, overlayKittModeToggle);
+    wireKittMode(overlayKittModeToggle, this.kittModeToggle);
 
     this.stageEl.addEventListener('mousemove', () => this.showOverlay());
     this.stageEl.addEventListener('touchstart', () => this.showOverlay(), { passive: true });
