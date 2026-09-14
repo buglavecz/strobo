@@ -30,14 +30,24 @@ const float KITT_GROUP_WIDTH = 0.64;
 const float KITT_COL_GAP = 0.22;
 const float KITT_SEGMENTS = 17.0;
 const float KITT_SEG_GAP = 0.09;
+const float KITT_EDGE_SOFTNESS = 0.07;
+
+// Soft rectangular window over [lo, hi] with feathered (anti-aliased,
+// glow-like) edges instead of a hard step.
+float softBand(float x, float lo, float hi, float feather) {
+  float a = smoothstep(lo - feather, lo + feather, x);
+  float b = 1.0 - smoothstep(hi - feather, hi + feather, x);
+  return a * b;
+}
 
 vec3 kittColor(vec2 uv, float time, float mids, float highs, float intensity) {
   float t = clamp((uv.x - KITT_GROUP_START) / KITT_GROUP_WIDTH, 0.0, 0.999999);
-  float inGroup = step(KITT_GROUP_START, uv.x) * step(uv.x, KITT_GROUP_START + KITT_GROUP_WIDTH);
+  float inGroup = smoothstep(KITT_GROUP_START - 0.01, KITT_GROUP_START + 0.01, uv.x)
+    * (1.0 - smoothstep(KITT_GROUP_START + KITT_GROUP_WIDTH - 0.01, KITT_GROUP_START + KITT_GROUP_WIDTH + 0.01, uv.x));
   float colSpace = t * KITT_COLUMNS;
   float col = floor(colSpace);
   float cellX = fract(colSpace);
-  float colMask = step(KITT_COL_GAP, cellX) * step(cellX, 1.0 - KITT_COL_GAP) * inGroup;
+  float colMask = softBand(cellX, KITT_COL_GAP, 1.0 - KITT_COL_GAP, KITT_EDGE_SOFTNESS) * inGroup;
 
   // The center column is always the tallest, like the reference display —
   // not left to per-column randomness. Side columns cap out noticeably
@@ -47,12 +57,15 @@ vec3 kittColor(vec2 uv, float time, float mids, float highs, float intensity) {
   float wave = 0.9 + 0.1 * sin(time * 1.8 + col * 2.1);
   // No uVolume/uBass here on purpose: overall loudness or a pure bass hit
   // must not move this display — only mids/highs (the vocal range) do.
-  float envelope = mids * 1.3 + highs * 0.5;
-  float level = clamp(envelope * colCap * jitter * wave * intensity, 0.0, 1.0);
+  float envelope = mids * 2.6 + highs * 1.0;
+  float raw = clamp(envelope * colCap * jitter * wave * intensity, 0.0, 1.0);
+  // A gentle boost curve so quieter speech still makes the columns jump
+  // noticeably tall, instead of only the loudest peaks reaching high up.
+  float level = pow(raw, 0.55);
 
   float segIndex = floor(uv.y * KITT_SEGMENTS);
   float segY = fract(uv.y * KITT_SEGMENTS);
-  float segGapMask = step(KITT_SEG_GAP, segY) * step(segY, 1.0 - KITT_SEG_GAP);
+  float segGapMask = softBand(segY, KITT_SEG_GAP, 1.0 - KITT_SEG_GAP, KITT_EDGE_SOFTNESS);
 
   float maxSegHalf = (KITT_SEGMENTS - 1.0) * 0.5;
   float segCenterOffset = abs(segIndex - maxSegHalf);
