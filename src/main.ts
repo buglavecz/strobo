@@ -77,13 +77,13 @@ async function handleStart(): Promise<void> {
   } catch (err) {
     if (source === 'display' && err instanceof Error && err.message === 'NO_AUDIO_TRACK') {
       ui.showError(
-        'No audio was shared. When the picker appears, choose the tab that’s playing sound (e.g. your YouTube tab) and make sure “share tab audio” is checked, then try again.'
+        'Nem érkezett megosztott hang. A felugró ablakban válaszd ki a hangot lejátszó fület (pl. a YouTube-fülét), és győződj meg róla, hogy a „fül hangjának megosztása” be van pipálva, majd próbáld újra.'
       );
     } else {
       ui.showError(
         source === 'display'
-          ? 'Screen/tab audio sharing was denied or unavailable. Please allow it and try again, or switch to Microphone in Settings.'
-          : 'Microphone access was denied or unavailable. Audio Strobe needs microphone access to react to sound — please allow it and try again.'
+          ? 'A képernyő-/fülhang megosztása megtagadva vagy nem elérhető. Engedélyezd és próbáld újra, vagy válts Mikrofonra a Beállításokban.'
+          : 'A mikrofonhoz való hozzáférés megtagadva vagy nem elérhető. Az Audio Strobe-nak szüksége van a mikrofonra, hogy reagálni tudjon a hangra — engedélyezd, és próbáld újra.'
       );
     }
     return;

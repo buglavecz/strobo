@@ -47,58 +47,60 @@ export class UI {
     this.landingEl.innerHTML = `
       <div class="landing-card">
         <h1 class="title">Audio Strobe</h1>
-        <p class="subtitle">Turn sound into light.</p>
+        <p class="subtitle">A hangból fény lesz.</p>
 
         <div class="warning">
-          <strong>Photosensitivity warning:</strong> this app produces rapid
-          flashing light synchronized to sound. Flashing lights can trigger
-          seizures or other adverse reactions in people with photosensitive
-          epilepsy or other conditions. Do not use if that applies to you or
-          anyone nearby. Stop immediately if you feel unwell.
+          <strong>Fényérzékenységi figyelmeztetés:</strong> ez az alkalmazás
+          gyors, a hanghoz igazodó villogó fényeket produkál. A villogó fény
+          fotoszenzitív epilepsziában vagy más érintett állapotban
+          rohamot vagy egyéb kellemetlen reakciót válthat ki. Ne használd,
+          ha ez rád vagy a közeledben lévőkre vonatkozik. Rosszullét esetén
+          azonnal állítsd le.
         </div>
 
-        <button class="start-button" type="button">Start</button>
+        <button class="start-button" type="button">Indítás</button>
 
         <div class="error hidden"></div>
 
         <details class="settings" open>
-          <summary>Settings</summary>
+          <summary>Beállítások</summary>
 
-          <p class="group-label">Audio source</p>
+          <p class="group-label">Hangforrás</p>
           <label class="row radio-row">
             <span>
-              Microphone
-              <span class="hint-inline">reacts to whatever the mic picks up in the room</span>
+              Mikrofon
+              <span class="hint-inline">arra reagál, amit a mikrofon felvesz a szobában</span>
             </span>
             <input type="radio" name="audio-source" class="source-radio" value="microphone" checked />
           </label>
           <label class="row radio-row ${this.displayCaptureSupported ? '' : 'disabled'}">
             <span>
-              Browser tab / system audio
-              <span class="hint-inline">e.g. a YouTube tab — no external mic needed</span>
+              Böngészőfül / rendszerhang
+              <span class="hint-inline">pl. egy YouTube-fül — nincs szükség külső mikrofonra</span>
             </span>
             <input type="radio" name="audio-source" class="source-radio" value="display" ${this.displayCaptureSupported ? '' : 'disabled'} />
           </label>
           <p class="hint">
             ${this.displayCaptureSupported
-              ? "For tab audio, pick the tab that's playing sound in the browser's share dialog and make sure “share tab audio” is checked."
-              : 'Tab/system audio capture is not supported in this browser — microphone only.'}
+              ? 'Fülhang megosztásához a böngésző megosztási ablakában válaszd ki a hangot lejátszó fület, és győződj meg róla, hogy a „fül hangjának megosztása” be van pipálva.'
+              : 'A böngésződ nem támogatja a fül-/rendszerhang megosztását — csak mikrofon érhető el.'}
           </p>
 
-          <p class="group-label">Safety</p>
+          <p class="group-label">Biztonság</p>
           <label class="row">
-            <span>Safe Mode</span>
+            <span>Biztonságos mód</span>
             <input type="checkbox" class="safe-mode-toggle" checked />
           </label>
           <p class="hint">
-            Safe Mode limits flash frequency and brightness and smooths
-            transitions. ${this.reducedMotion ? 'Your system is set to reduce motion, so Safe Mode is locked on.' : 'Turning it off requires an extra confirmation.'}
+            A Biztonságos mód korlátozza a villanások gyakoriságát és
+            fényerejét, és lágyabb átmeneteket használ.
+            ${this.reducedMotion ? 'A rendszered csökkentett mozgást kér, ezért a Biztonságos mód zárolva be van kapcsolva.' : 'Kikapcsolásához külön megerősítés szükséges.'}
           </p>
           <label class="row">
-            <span>Intensity</span>
+            <span>Intenzitás</span>
             <input type="range" class="intensity-input" min="0" max="1" step="0.01" value="1" />
           </label>
-          <p class="hint">Microphone/tab audio access is requested only after you press Start, and is released whenever you stop or leave fullscreen.</p>
+          <p class="hint">A mikrofon-/fülhang-hozzáférést csak az Indítás gomb megnyomása után kéri be az app, és leállításkor vagy a teljes képernyő elhagyásakor felszabadítja.</p>
         </details>
       </div>
     `;
@@ -113,13 +115,13 @@ export class UI {
     this.overlayEl = document.createElement('div');
     this.overlayEl.className = 'overlay hidden';
     this.overlayEl.innerHTML = `
-      <button type="button" class="stop-button">Stop</button>
+      <button type="button" class="stop-button">Leállítás</button>
       <label class="row">
-        <span>Safe Mode</span>
+        <span>Biztonságos mód</span>
         <input type="checkbox" class="overlay-safe-mode-toggle" checked />
       </label>
       <label class="row">
-        <span>Intensity</span>
+        <span>Intenzitás</span>
         <input type="range" class="overlay-intensity-input" min="0" max="1" step="0.01" value="1" />
       </label>
       <div class="level-meter"><div class="level-bar"></div></div>
@@ -131,13 +133,14 @@ export class UI {
     this.confirmEl.innerHTML = `
       <div class="confirm-card">
         <p>
-          Disabling Safe Mode allows faster, brighter, less smoothed
-          flashing. This increases the risk of triggering seizures in
-          photosensitive people. Continue only if you understand the risk.
+          A Biztonságos mód kikapcsolása gyorsabb, fényesebb, kevésbé
+          lágyított villogást tesz lehetővé. Ez növeli a rohamkiváltás
+          kockázatát fényérzékeny embereknél. Csak akkor folytasd, ha
+          tisztában vagy a kockázattal.
         </p>
         <div class="confirm-actions">
-          <button type="button" class="confirm-cancel">Keep Safe Mode</button>
-          <button type="button" class="confirm-accept">Disable Anyway</button>
+          <button type="button" class="confirm-cancel">Biztonságos mód megtartása</button>
+          <button type="button" class="confirm-accept">Mégis kikapcsolom</button>
         </div>
       </div>
     `;
