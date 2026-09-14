@@ -74,11 +74,14 @@ npm run preview
 ### KITT mode
 
 A "KITT mód" toggle in Settings (and the in-session overlay) swaps the
-default glow visual for a row of vertical red bars reminiscent of the
-Knight Rider KITT voice display, growing symmetrically from a centerline.
-It's driven by the same audio features and the same safety-limited
-`uFlash` signal as the default visual, so Safe Mode's flash-rate and
-brightness limits apply here too.
+default glow visual for three columns of stacked red LED-style segments,
+modeled on the Knight Rider KITT dashboard voice display — brightest at the
+centerline and fading toward the ends, with the center column always the
+tallest. It's driven by mids/highs (the vocal range) rather than bass or
+overall loudness, so it reacts to speech/vocals rather than a bassline, and
+it never reads from `uFlash`/`uBeat`, so it can't introduce its own
+uncontrolled flicker frequency — the visible motion is either a slow,
+smooth per-column drift or genuine mids/highs energy.
 
 ## Browser requirements
 

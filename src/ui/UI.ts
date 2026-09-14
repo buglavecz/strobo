@@ -107,7 +107,7 @@ export class UI {
           <label class="row">
             <span>
               KITT mód
-              <span class="hint-inline">Knight Rider hangkijelző: függőleges piros csíkok</span>
+              <span class="hint-inline">Knight Rider hangkijelző: piros LED-oszlopok, elsősorban a beszédre reagálva</span>
             </span>
             <input type="checkbox" class="kitt-mode-toggle" />
           </label>

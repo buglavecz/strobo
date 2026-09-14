@@ -59,6 +59,7 @@ export class Visualizer {
         uBeat: { value: 0 },
         uFlash: { value: 0 },
         uKitt: { value: 0 },
+        uIntensity: { value: 1 },
       },
     });
 
@@ -111,6 +112,7 @@ export class Visualizer {
       u.uHighs.value = features.highs;
       u.uBeat.value = features.beat;
       u.uFlash.value = flash;
+      u.uIntensity.value = this.strobe.masterIntensity;
       u.uTime.value = (now - this.startTime) / 1000;
 
       this.lastFlash = flash;

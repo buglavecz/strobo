@@ -9,6 +9,7 @@ uniform float uHighs;
 uniform float uBeat;
 uniform float uFlash;
 uniform float uKitt;
+uniform float uIntensity;
 
 varying vec2 vUv;
 
@@ -16,41 +17,52 @@ float hash(vec2 p) {
   return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453123);
 }
 
-// Knight Rider "KITT" voice display: a row of vertical red bars, symmetric
-// about the centerline, driven by the same safety-limited audio signals as
-// the rest of the shader (uFlash is already rate/brightness limited by
-// StrobeController, so this mode never introduces its own flicker source —
-// only a slow, smooth sine drift is added per bar for a bit of life).
-const float KITT_BARS = 15.0;
-const float KITT_GAP = 0.16;
-const float KITT_MAX_HALF = 0.17;
+// Knight Rider "KITT" voice display: three columns of stacked LED-style
+// segments, brightest at the centerline and fading toward the ends —
+// modeled after the dashboard voice indicator, not the front scanner bar.
+// Driven mainly by mids/highs (the vocal range) rather than bass, per
+// product direction, and kept independent of uFlash/uBeat so it never
+// introduces its own uncontrolled flicker frequency — only a slow, smooth
+// per-column sine drift is added for a bit of organic life.
+const float KITT_COLUMNS = 3.0;
+const float KITT_GROUP_START = 0.18;
+const float KITT_GROUP_WIDTH = 0.64;
+const float KITT_COL_GAP = 0.22;
+const float KITT_SEGMENTS = 17.0;
+const float KITT_SEG_GAP = 0.09;
 
-vec3 kittColor(vec2 uv, float time, float volume, float bass, float flash) {
-  float col = floor(uv.x * KITT_BARS);
-  float cellX = fract(uv.x * KITT_BARS);
-  float barMask = step(KITT_GAP, cellX) * step(cellX, 1.0 - KITT_GAP);
+vec3 kittColor(vec2 uv, float time, float mids, float highs, float intensity) {
+  float t = clamp((uv.x - KITT_GROUP_START) / KITT_GROUP_WIDTH, 0.0, 0.999999);
+  float inGroup = step(KITT_GROUP_START, uv.x) * step(uv.x, KITT_GROUP_START + KITT_GROUP_WIDTH);
+  float colSpace = t * KITT_COLUMNS;
+  float col = floor(colSpace);
+  float cellX = fract(colSpace);
+  float colMask = step(KITT_COL_GAP, cellX) * step(cellX, 1.0 - KITT_COL_GAP) * inGroup;
 
-  float center = (KITT_BARS - 1.0) * 0.5;
-  float p = (col - center) / center;
+  // The center column is always the tallest, like the reference display —
+  // not left to per-column randomness. Side columns cap out noticeably
+  // lower than the center one regardless of jitter.
+  float colCap = col == 1.0 ? 1.0 : 0.68;
+  float jitter = 0.9 + 0.1 * hash(vec2(col, 3.0));
+  float wave = 0.9 + 0.1 * sin(time * 1.8 + col * 2.1);
+  // No uVolume/uBass here on purpose: overall loudness or a pure bass hit
+  // must not move this display — only mids/highs (the vocal range) do.
+  float envelope = mids * 1.3 + highs * 0.5;
+  float level = clamp(envelope * colCap * jitter * wave * intensity, 0.0, 1.0);
 
-  float rnd = hash(vec2(col, 7.0));
-  float wave = 0.85 + 0.15 * sin(time * 2.2 + col * 1.7);
-  float envelope = volume * 0.75 + bass * 0.35;
-  // Beat impulses are intentionally left out here: uFlash is the only
-  // signal StrobeController rate-limits, so it's the sole source of sudden
-  // "kicks" in KITT mode too — this keeps the same max-flash-frequency
-  // guarantee that applies to the default visual.
-  float level = envelope * (0.6 + rnd * 0.4) * wave + flash * 0.6;
-  level *= mix(1.0, 0.55, abs(p));
-  level = clamp(level, 0.0, 1.0);
+  float segIndex = floor(uv.y * KITT_SEGMENTS);
+  float segY = fract(uv.y * KITT_SEGMENTS);
+  float segGapMask = step(KITT_SEG_GAP, segY) * step(segY, 1.0 - KITT_SEG_GAP);
 
-  float halfHeight = level * KITT_MAX_HALF;
-  float distFromCenter = abs(uv.y - 0.5);
+  float maxSegHalf = (KITT_SEGMENTS - 1.0) * 0.5;
+  float segCenterOffset = abs(segIndex - maxSegHalf);
+  float litHalf = level * maxSegHalf;
+  // Shifted smoothstep so a segment only lights once litHalf actually
+  // reaches it — at level 0 every segment (including the center one) is
+  // fully dark, instead of the centerline being permanently lit.
+  float segBrightness = 1.0 - smoothstep(litHalf - 1.0, litHalf, segCenterOffset);
 
-  float lit = smoothstep(halfHeight + 0.01, halfHeight - 0.01, distFromCenter);
-  float glow = exp(-max(distFromCenter - halfHeight, 0.0) * 40.0) * 0.35;
-
-  float brightness = (lit + glow) * barMask;
+  float brightness = segBrightness * segGapMask * colMask;
   return vec3(1.0, 0.05, 0.02) * brightness;
 }
 
@@ -86,7 +98,7 @@ void main() {
 
   vec3 color = subtleColor + flashColor + vec3(grain);
 
-  vec3 kitt = kittColor(vUv, uTime, uVolume, uBass, uFlash);
+  vec3 kitt = kittColor(vUv, uTime, uMids, uHighs, uIntensity);
   color = mix(color, kitt, uKitt);
 
   float vignette = smoothstep(1.15, 0.15, dist);
